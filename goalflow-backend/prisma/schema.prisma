@@ -1,0 +1,261 @@
+// GoalFlow — Prisma schema
+// Covers BRD entities: Users (3 roles), Goals (with Min/Max direction), Quarter updates,
+// Cycles, Audit, Notifications, Escalations, and Shared-goal linkage.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum UoM {
+  NUMERIC
+  PERCENTAGE
+  TIMELINE
+  ZERO_BASED
+}
+
+// BRD §2.2 — Min: higher-is-better (Sales). Max: lower-is-better (TAT/Cost).
+// Only meaningful for NUMERIC/PERCENTAGE. Ignored for TIMELINE/ZERO_BASED.
+enum Direction {
+  MIN
+  MAX
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  ON_TRACK
+  COMPLETED
+}
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  RETURNED
+}
+
+enum ThrustArea {
+  ENERGY_EFFICIENCY
+  MARKET_EXPANSION
+  PRODUCT_INNOVATION
+  CUSTOMER_SUCCESS
+  OPERATIONAL_EXCELLENCE
+}
+
+enum CycleStatus {
+  UPCOMING
+  ACTIVE
+  CLOSED
+}
+
+enum CycleKind {
+  GOAL_SETTING
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+enum Quarter {
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+enum NotificationType {
+  SUBMIT
+  APPROVAL
+  RETURN
+  CHECKIN_REMINDER
+  ESCALATION
+  SHARED_GOAL
+}
+
+enum EscalationTrigger {
+  GOAL_NOT_SUBMITTED
+  APPROVAL_PENDING
+  CHECKIN_INCOMPLETE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  department   String
+  avatar       String?
+  managerId    String?
+  manager      User?    @relation("ManagerToReports", fields: [managerId], references: [id])
+  reports      User[]   @relation("ManagerToReports")
+
+  goals               Goal[]
+  approvedGoals       Goal[]            @relation("ApprovedBy")
+  auditEntries        AuditEntry[]
+  notifications       Notification[]
+  escalationsAsTarget EscalationEvent[] @relation("EscTarget")
+  escalationsReceived EscalationEvent[] @relation("EscTo")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([managerId])
+}
+
+model Cycle {
+  id         String      @id @default(cuid())
+  name       String
+  kind       CycleKind
+  status     CycleStatus @default(UPCOMING)
+  openDate   DateTime
+  closeDate  DateTime
+  fiscalYear String
+  goals      Goal[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([status])
+  @@index([kind])
+  @@index([fiscalYear])
+}
+
+model Goal {
+  id             String         @id @default(cuid())
+  ownerId        String
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  cycleId        String?
+  cycle          Cycle?         @relation(fields: [cycleId], references: [id], onDelete: SetNull)
+
+  thrustArea     ThrustArea
+  title          String
+  description    String         @default("")
+  uom            UoM
+  direction      Direction      @default(MIN)
+  target         Float
+  weightage      Float          // BRD §2.1: min 10, sum=100 enforced at submission
+
+  approvalStatus ApprovalStatus @default(DRAFT)
+  locked         Boolean        @default(false)
+  returnReason   String?
+
+  // Shared-goal mechanics (BRD §2.1)
+  // A shared goal has one PRIMARY (where actuals are entered) and N CLONES
+  // (one per recipient). Clones may adjust weightage only; title/target read-only.
+  // Achievement on primary syncs to clones via service layer.
+  isSharedPrimary Boolean  @default(false)
+  isSharedClone   Boolean  @default(false)
+  sharedPrimaryId String?
+  sharedPrimary   Goal?    @relation("SharedPrimaryToClones", fields: [sharedPrimaryId], references: [id], onDelete: SetNull)
+  sharedClones    Goal[]   @relation("SharedPrimaryToClones")
+
+  fiscalYear String
+
+  quarters  QuarterUpdate[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  submittedAt DateTime?
+  approvedAt  DateTime?
+  approvedById String?
+  approvedBy   User?    @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@index([approvalStatus])
+  @@index([sharedPrimaryId])
+  @@index([cycleId])
+  @@index([fiscalYear])
+}
+
+model QuarterUpdate {
+  id        String     @id @default(cuid())
+  goalId    String
+  goal      Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  quarter   Quarter
+  actual    Float?
+  status    GoalStatus @default(NOT_STARTED)
+  note      String?
+  updatedAt DateTime   @updatedAt
+  updatedById String?
+
+  @@unique([goalId, quarter])
+  @@index([goalId])
+}
+
+// BRD §4 — audit trail: capture all post-lock changes (who/what/when).
+// We log everything but flag postLock for the BRD requirement.
+model AuditEntry {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName      String   // denormalized for resilience if user deleted
+  action        String
+  entityType    String   // "GOAL" | "CYCLE" | "USER" | "SHARED_GOAL"
+  entityId      String?
+  entityLabel   String   // human-readable (goal title, cycle name)
+  previousValue String?
+  newValue      String?
+  triggeredBy   String   // "Manager Review" | "Admin Action" | "Self Update" | "Scheduler"
+  postLock      Boolean  @default(false)
+  timestamp     DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@index([postLock])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model EscalationRule {
+  id          String            @id @default(cuid())
+  name        String
+  trigger     EscalationTrigger
+  thresholdDays Int
+  enabled     Boolean           @default(true)
+  // Level intervals: L1 (manager) after N days, L2 (skip-level) after 2N, L3 (HR) after 3N
+  events      EscalationEvent[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model EscalationEvent {
+  id            String         @id @default(cuid())
+  ruleId        String
+  rule          EscalationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  targetId      String
+  target        User           @relation("EscTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  escalatedToId String
+  escalatedTo   User           @relation("EscTo", fields: [escalatedToId], references: [id], onDelete: Cascade)
+  level         Int            @default(1)
+  reason        String
+  resolved      Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  @@index([targetId])
+  @@index([resolved])
+  @@index([createdAt])
+}

@@ -1,0 +1,79 @@
+# ────────────────────────────────────────────────────────────────────────────
+# GoalFlow monorepo root .gitignore
+# Applies to both goalflow-backend and goalflow-atomberg-hub
+# ────────────────────────────────────────────────────────────────────────────
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build artifacts
+dist/
+**/dist/
+build/
+**/build/
+.output/
+**/.output/
+.nitro/
+.vinxi/
+.tanstack/
+
+# Cloudflare Wrangler local state
+.wrangler/
+.dev.vars
+
+# ────────────────────────────────────────────────────────────────────────────
+# Environment / secrets — NEVER commit
+# (Supabase DB password, Resend API key, Azure client secret all live here)
+# ────────────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.local
+
+# Databases (legacy local SQLite snapshots, now superseded by Supabase)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Prisma dev migrations (we use Supabase migrations as source of truth)
+**/prisma/migrations/dev*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary / caches
+*.tmp
+.cache/
+
+# Claude Code project state
+.claude/
+
+# Extracted doc artifacts (BRD docx pre-parsed; not source)
+_doc_extracted.xml
+_doc_text.txt

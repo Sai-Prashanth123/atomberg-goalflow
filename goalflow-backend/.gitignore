@@ -1,0 +1,47 @@
+# ────────────────────────────────────────────────────────────────────────────
+# goalflow-backend — Fastify + Prisma + Supabase
+# Most rules also live in the root .gitignore — duplicated here so the
+# subdirectory still ignores correctly if extracted standalone.
+# ────────────────────────────────────────────────────────────────────────────
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment / secrets — DATABASE_URL, RESEND_API_KEY, JWT_SECRET, etc.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Legacy local DB snapshots (replaced by Supabase)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Dev migrations created locally during prototyping
+prisma/migrations/dev*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Caches
+.cache/
+.turbo/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
