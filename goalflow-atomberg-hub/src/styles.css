@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Roboto:wght@300;400;500;700;900&family=Roboto+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+
+@source "../src";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+
+  --font-display: "Space Grotesk", "Founders Grotesk", system-ui, sans-serif;
+  --font-sans: "Roboto", system-ui, sans-serif;
+  --font-mono: "Roboto Mono", "JetBrains Mono", monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-gold: #F2BB44;
+  --color-gold-dim: #F2BB4426;
+  --color-gold-hover: #E0A830;
+  --color-gold-deep: #B8861C;
+  --color-off-black: #FFFFFF;
+  --color-card-bg: #F4FAFC;
+  --color-line: #BDDBE5;
+  --color-off-white: #F8FCFD;
+  --color-danger: #DC2626;
+  --color-ink: #0F1419;
+  --color-tint: #D1EDF6;
+}
+
+:root {
+  --radius: 4px;
+  --background: #D1EDF6;
+  --foreground: #0F1419;
+  --card: #FFFFFF;
+  --card-foreground: #0F1419;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F1419;
+  --primary: #F2BB44;
+  --primary-foreground: #0F1419;
+  --secondary: #FFFFFF;
+  --secondary-foreground: #0F1419;
+  --muted: #EAF5F9;
+  --muted-foreground: #5C6E78;
+  --accent: #F2BB44;
+  --accent-foreground: #0F1419;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #BDDBE5;
+  --input: #BDDBE5;
+  --ring: #F2BB44;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F1419;
+  --sidebar-primary: #F2BB44;
+  --sidebar-primary-foreground: #0F1419;
+  --sidebar-accent: #F4FAFC;
+  --sidebar-accent-foreground: #0F1419;
+  --sidebar-border: #BDDBE5;
+  --sidebar-ring: #F2BB44;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html, body {
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(at 0% 0%, rgba(242, 187, 68, 0.10) 0%, transparent 40%),
+      radial-gradient(at 100% 0%, rgba(195, 231, 241, 0.55) 0%, transparent 45%),
+      radial-gradient(at 80% 100%, rgba(242, 187, 68, 0.06) 0%, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(189, 219, 229, 0.45) 0%, transparent 45%);
+    background-attachment: fixed;
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(15,20,25,0.04) 1px, transparent 0);
+    background-size: 3px 3px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  .font-mono, code, pre {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .label-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    font-weight: 500;
+  }
+  .bento {
+    background: linear-gradient(
+      135deg,
+      rgba(253, 250, 244, 0.62) 0%,
+      rgba(248, 252, 254, 0.42) 100%
+    );
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 4px;
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+    position: relative;
+    box-shadow:
+      0 1px 2px rgba(15,20,25,0.03),
+      0 10px 30px -14px rgba(15,20,25,0.12),
+      inset 0 1px 0 rgba(255,255,255,0.55);
+  }
+  .bento-hover:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(
+      135deg,
+      rgba(253, 250, 244, 0.78) 0%,
+      rgba(248, 252, 254, 0.58) 100%
+    );
+    border-color: rgba(242, 187, 68, 0.4);
+    border-left: 2px solid var(--color-gold);
+    box-shadow:
+      0 4px 12px rgba(15,20,25,0.05),
+      0 18px 40px -12px rgba(15,20,25,0.16),
+      inset 0 1px 0 rgba(255,255,255,0.65);
+  }
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+    opacity: 0.5;
+  }
+
+  /* ── Dashboard scope ──────────────────────────────────────────────────────
+     Authenticated pages wrapped in <AppShell> get a clean white surface.
+     We rebind the CSS color vars locally so any Tailwind utility that resolves
+     against them (bg-background, bg-card-bg, bg-muted, border-line) inherits
+     the white-on-grey palette without touching the public login screen.     */
+  .dashboard-shell {
+    --background: #FFFFFF;
+    --color-background: #FFFFFF;
+    --card-bg: #F8F9FA;
+    --color-card-bg: #F8F9FA;
+    --muted: #F4F5F7;
+    --color-muted: #F4F5F7;
+    background: #FFFFFF;
+  }
+  /* Glass cards on a white background — bump opacity + add a soft neutral
+     border + warmer drop-shadow so they pop without looking like floating
+     ghosts. Overrides the lower-contrast values from .bento above. */
+  .dashboard-shell .bento {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(15, 20, 25, 0.06);
+    box-shadow:
+      0 1px 2px rgba(15,20,25,0.04),
+      0 8px 24px -16px rgba(15,20,25,0.10);
+  }
+  .dashboard-shell .bento-hover:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(242, 187, 68, 0.45);
+    border-left: 2px solid var(--color-gold);
+    box-shadow:
+      0 4px 12px rgba(15,20,25,0.05),
+      0 16px 32px -12px rgba(15,20,25,0.14);
+  }
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #E5EEF1 0%, #F4FAFC 50%, #E5EEF1 100%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite linear;
+  }
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 0 0 var(--color-gold-dim); }
+    50% { box-shadow: 0 0 0 6px transparent; }
+  }
+  .pulse-gold { animation: pulse-gold 1.8s infinite; }
+}
