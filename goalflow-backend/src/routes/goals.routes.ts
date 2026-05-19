@@ -55,15 +55,46 @@ const quarterPatchSchema = z.object({
 
 export async function goalsRoutes(app: FastifyInstance) {
   // List goals — scoped by query: ?ownerId=... or ?teamOf=managerId or ?mine=1
-  app.get("/", { preHandler: app.authenticate }, async (req) => {
+  // Role-aware authorization (BRD §3): EMPLOYEE → own only, MANAGER → own + direct
+  // reports, ADMIN → no filter. Requested filters are intersected with this scope so
+  // a junior user cannot exfiltrate goals by passing a different ownerId.
+  app.get("/", { preHandler: app.authenticate }, async (req, reply) => {
     const q = req.query as { ownerId?: string; teamOf?: string; mine?: string; cycleId?: string };
-    const where: Record<string, unknown> = {};
-    if (q.mine) where.ownerId = req.user.sub;
-    else if (q.ownerId) where.ownerId = q.ownerId;
+    const role = req.user.role;
+    const callerId = req.user.sub;
+
+    // Compute the set of owner IDs this caller is allowed to see.
+    let allowedOwnerIds: string[] | null = null; // null = no restriction (admin only)
+    if (role === "EMPLOYEE") {
+      allowedOwnerIds = [callerId];
+    } else if (role === "MANAGER") {
+      const reports = await app.prisma.user.findMany({ where: { managerId: callerId }, select: { id: true } });
+      allowedOwnerIds = [callerId, ...reports.map((r) => r.id)];
+    }
+    // ADMIN → allowedOwnerIds stays null, full org-wide visibility.
+
+    // Compute the requested owner filter (if any).
+    let requestedOwnerIds: string[] | null = null;
+    if (q.mine) requestedOwnerIds = [callerId];
+    else if (q.ownerId) requestedOwnerIds = [q.ownerId];
     else if (q.teamOf) {
       const reports = await app.prisma.user.findMany({ where: { managerId: q.teamOf }, select: { id: true } });
-      where.ownerId = { in: reports.map((r) => r.id) };
+      requestedOwnerIds = reports.map((r) => r.id);
     }
+
+    // Intersect requested filter with allowed scope. Non-admins requesting outside
+    // their scope get an empty result (not a 403, to avoid leaking existence info).
+    let finalOwnerIds: string[] | null = null;
+    if (allowedOwnerIds === null) {
+      finalOwnerIds = requestedOwnerIds;
+    } else if (requestedOwnerIds === null) {
+      finalOwnerIds = allowedOwnerIds;
+    } else {
+      finalOwnerIds = requestedOwnerIds.filter((id) => allowedOwnerIds!.includes(id));
+    }
+
+    const where: Record<string, unknown> = {};
+    if (finalOwnerIds !== null) where.ownerId = { in: finalOwnerIds };
     if (q.cycleId) where.cycleId = q.cycleId;
 
     const goals = await app.prisma.goal.findMany({
@@ -71,7 +102,7 @@ export async function goalsRoutes(app: FastifyInstance) {
       include: { quarters: true, owner: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "asc" },
     });
-    return { goals };
+    return reply.send({ goals });
   });
 
   app.get("/:id", { preHandler: app.authenticate }, async (req, reply) => {
@@ -81,6 +112,20 @@ export async function goalsRoutes(app: FastifyInstance) {
       include: { quarters: true, owner: true, sharedPrimary: true, sharedClones: true },
     });
     if (!goal) return reply.code(404).send({ error: "Goal not found" });
+
+    // Role-aware visibility check (BRD §3). Admins see everything; managers see
+    // own + direct reports; employees see only their own goals.
+    const role = req.user.role;
+    const callerId = req.user.sub;
+    if (role !== "ADMIN") {
+      let allowed = goal.ownerId === callerId;
+      if (!allowed && role === "MANAGER") {
+        const owner = await app.prisma.user.findUnique({ where: { id: goal.ownerId }, select: { managerId: true } });
+        allowed = owner?.managerId === callerId;
+      }
+      if (!allowed) return reply.code(403).send({ error: "Forbidden" });
+    }
+
     return { goal };
   });
 

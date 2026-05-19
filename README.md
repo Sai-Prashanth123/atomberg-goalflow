@@ -10,19 +10,16 @@ A unified portal that replaces the spreadsheets, email threads, and offline revi
 
 ## Demo credentials
 
-Every account uses password **`password123`**. Click the role chips on the login screen to fill credentials instantly.
+**Three role-based accounts** with unique strong passwords are pre-seeded for evaluation. The full credentials table, what each account demonstrates, and a 10-minute suggested testing order live in a single page:
 
-| Role | Email | What you'll see |
-|---|---|---|
-| **Admin** | `rohan@atomberg.com` | Cycle CRUD, hierarchy, audit trail (2 post-lock entries), shared-goal push, escalation rules CRUD + 4 events (L1×2 + L2 + L3 resolved), analytics with dept filter, CSV/XLSX export |
-| **Manager (Engineering)** | `priya@atomberg.com` | Pending-approval queue (Aarav's TAT goal), team check-in module for 3 reports, 2 L1 escalations in the bell drawer |
-| **Manager (Sales)** | `karthik@atomberg.com` | Approved-team check-in for Arjun (who deliberately missed Q1) |
-| **Employee** | `aarav@atomberg.com` | Full state: 2 APPROVED+LOCKED + 1 PENDING + 1 RETURNED-with-reason + 1 shared clone; 3 Q1 check-ins logged |
-| Employee | `neha@atomberg.com` | All approved + Q1 fully completed |
-| Employee | `vikram@atomberg.com` | 2 DRAFT goals at 50% — demos the "weightage must equal 100%" submit guard + GOAL_NOT_SUBMITTED escalation |
-| Employee | `arjun@atomberg.com` | All approved but ZERO Q1 actuals — demos CHECKIN_INCOMPLETE escalation chain |
+➡️ **See [`docs/JUDGES-LOGIN-GUIDE.md`](docs/JUDGES-LOGIN-GUIDE.md)** for emails + passwords.
 
-Real Microsoft SSO is wired but requires Azure AD app registration — see [`docs/SETUP-AZURE-SSO.md`](docs/SETUP-AZURE-SSO.md).
+Summary:
+- **Admin** (`rohan@atomberg.com`) — full governance: cycles, hierarchy, audit trail, shared goals, escalation rules CRUD, analytics with department drill-down, CSV/XLSX export
+- **Manager** (`priya@atomberg.com`) — pending-approval queue, team check-in module, L1 escalation visibility
+- **Employee** (`aarav@atomberg.com`) — goal lifecycle (DRAFT → PENDING → APPROVED+LOCKED → check-ins), with a RETURNED-with-reason example pre-seeded
+
+Real Microsoft SSO is wired (multi-tenant + personal accounts). On first SSO sign-in a user is auto-provisioned as EMPLOYEE in "Unassigned" department — Admin can then promote them via `/admin/hierarchy`. See [`docs/SETUP-AZURE-SSO.md`](docs/SETUP-AZURE-SSO.md).
 
 ## Architecture
 

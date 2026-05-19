@@ -1,0 +1,22 @@
+# ─── GoalFlow — single container, env values baked into the image ──────────
+# All env vars now live inside the Dockerfile via ENV directives. This compose
+# file just maps ports — pull the image, run, done. Useful for Azure /
+# docker-run scenarios where you don't want to type 20 env vars in a UI.
+#
+# Local override: if you DO want to change a value at runtime, add an
+# `environment:` block here — compose env vars override Dockerfile ENV.
+#
+# SECURITY: secrets (Supabase password, Resend key, JWT secret) are now part
+# of the public Docker Hub image. Rotate them after testing finishes.
+
+services:
+  goalflow:
+    image: prashanth1710/goalflow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goalflow
+    ports:
+      - "3001:3001"   # backend (Fastify + Swagger docs at /docs)
+      - "8081:8081"   # frontend (Vite dev server + /api proxy)
+    restart: unless-stopped

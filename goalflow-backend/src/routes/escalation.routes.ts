@@ -20,6 +20,14 @@ export async function escalationRoutes(app: FastifyInstance) {
     const parse = ruleSchema.safeParse(req.body);
     if (!parse.success) return reply.code(400).send({ error: parse.error.flatten() });
     const rule = await app.prisma.escalationRule.create({ data: parse.data });
+    await writeAudit(app.prisma, req.user, {
+      action: "Created Escalation Rule",
+      entityType: "ESCALATION",
+      entityId: rule.id,
+      entityLabel: rule.name,
+      newValue: `${rule.trigger} @ ${rule.thresholdDays}d, enabled=${rule.enabled}`,
+      triggeredBy: "Admin Action",
+    });
     return { rule };
   });
 
@@ -27,13 +35,35 @@ export async function escalationRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string };
     const parse = ruleSchema.partial().safeParse(req.body);
     if (!parse.success) return reply.code(400).send({ error: parse.error.flatten() });
+    const previous = await app.prisma.escalationRule.findUnique({ where: { id } });
+    if (!previous) return reply.code(404).send({ error: "Rule not found" });
     const rule = await app.prisma.escalationRule.update({ where: { id }, data: parse.data });
+    await writeAudit(app.prisma, req.user, {
+      action: "Updated Escalation Rule",
+      entityType: "ESCALATION",
+      entityId: rule.id,
+      entityLabel: rule.name,
+      previousValue: `${previous.trigger} @ ${previous.thresholdDays}d, enabled=${previous.enabled}`,
+      newValue: `${rule.trigger} @ ${rule.thresholdDays}d, enabled=${rule.enabled}`,
+      triggeredBy: "Admin Action",
+    });
     return { rule };
   });
 
-  app.delete("/rules/:id", { preHandler: app.requireRole(["ADMIN"]) }, async (req) => {
+  app.delete("/rules/:id", { preHandler: app.requireRole(["ADMIN"]) }, async (req, reply) => {
     const { id } = req.params as { id: string };
+    const existing = await app.prisma.escalationRule.findUnique({ where: { id } });
+    if (!existing) return reply.code(404).send({ error: "Rule not found" });
     await app.prisma.escalationRule.delete({ where: { id } });
+    await writeAudit(app.prisma, req.user, {
+      action: "Deleted Escalation Rule",
+      entityType: "ESCALATION",
+      entityId: existing.id,
+      entityLabel: existing.name,
+      previousValue: `${existing.trigger} @ ${existing.thresholdDays}d, enabled=${existing.enabled}`,
+      newValue: "deleted",
+      triggeredBy: "Admin Action",
+    });
     return { ok: true };
   });
 

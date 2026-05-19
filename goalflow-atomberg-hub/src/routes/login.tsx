@@ -3,17 +3,11 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { useLogin } from "@/api/hooks";
 import { supabase } from "@/lib/supabase";
-import { Bento, Chip, GoldButton, Input, Metric } from "@/components/ui-kit";
+import { Bento, GoldButton, Input, Metric } from "@/components/ui-kit";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import logo from "@/assets/atomberg-logo.svg";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
-
-const ROLES = [
-  { label: "Employee", email: "aarav@atomberg.com" },
-  { label: "Manager", email: "priya@atomberg.com" },
-  { label: "Admin", email: "rohan@atomberg.com" },
-];
 
 function LoginPage() {
   const nav = useNavigate();
@@ -21,8 +15,8 @@ function LoginPage() {
   const login = useLogin();
 
   const [show, setShow] = useState(false);
-  const [email, setEmail] = useState("aarav@atomberg.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ssoBusy, setSsoBusy] = useState(false);
 
@@ -145,17 +139,6 @@ function LoginPage() {
                 >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="label-eyebrow mb-2" id="demo-role-label">Demo Role — quick switch</div>
-              <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="demo-role-label">
-                {ROLES.map((r) => (
-                  <Chip key={r.label} active={email === r.email} onClick={() => { setEmail(r.email); setPassword("password123"); }}>
-                    {r.label}
-                  </Chip>
-                ))}
               </div>
             </div>
 

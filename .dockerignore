@@ -1,0 +1,46 @@
+# Dependencies — installed fresh inside the image
+**/node_modules
+
+# Build outputs / caches
+**/dist
+**/dist-ssr
+**/.output
+**/.nitro
+**/.vinxi
+**/.tanstack
+**/.wrangler
+**/.turbo
+**/.cache
+
+# Git
+.git
+**/.git
+.gitignore
+**/.gitignore
+
+# Secrets — env values are injected via docker-compose, not baked into image
+**/.env
+**/.env.local
+**/.env.*.local
+**/.dev.vars
+
+# Logs
+**/*.log
+**/logs
+
+# Editor / OS
+**/.vscode
+**/.idea
+**/.DS_Store
+**/Thumbs.db
+
+# Project artifacts not needed in container
+.claude
+docs
+*.docx
+README.md
+
+# Docker files themselves (avoid recursive context)
+Dockerfile
+docker-compose.yml
+.dockerignore

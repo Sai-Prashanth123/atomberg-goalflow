@@ -12,7 +12,16 @@ const hoursAgo = (n: number) => new Date(NOW.getTime() - n * HOUR);
 
 async function main() {
   console.log("→ seeding GoalFlow demo dataset (slim, BRD-aligned, hackathon submission)…");
-  const hash = await bcrypt.hash("password123", 8);
+
+  // Per-user passwords:
+  //   - The 3 judging accounts (Rohan/Priya/Aarav) use unique strong passwords,
+  //     documented in docs/JUDGES-LOGIN-GUIDE.md.
+  //   - The 4 supporting users (Karthik/Neha/Vikram/Arjun) keep `password123` —
+  //     they exist only for demo-data variety; judges don't log in as them.
+  const adminHash      = await bcrypt.hash("Atomberg#Govern!2026X9",  8);
+  const managerHash    = await bcrypt.hash("Atomberg#Review!2026K4",  8);
+  const employeeHash   = await bcrypt.hash("Atomberg#Goalset!2026P7", 8);
+  const supportingHash = await bcrypt.hash("password123",             8);
 
   // ── wipe (FK-safe order) ────────────────────────────────────────────────
   await prisma.escalationEvent.deleteMany();
@@ -27,16 +36,16 @@ async function main() {
   // ── 1. USERS (7) — Admin + 2 Managers + 4 Employees across 2 departments ────
   await prisma.user.createMany({
     data: [
-      { id: "usr_rohan",   email: "rohan@atomberg.com",   name: "Rohan Kapoor",   passwordHash: hash, role: "ADMIN",    department: "Operations",  managerId: null,          createdAt: daysAgo(60), updatedAt: NOW },
-      { id: "usr_priya",   email: "priya@atomberg.com",   name: "Priya Iyer",     passwordHash: hash, role: "MANAGER",  department: "Engineering", managerId: "usr_rohan",   createdAt: daysAgo(55), updatedAt: NOW },
-      { id: "usr_karthik", email: "karthik@atomberg.com", name: "Karthik Reddy",  passwordHash: hash, role: "MANAGER",  department: "Sales",       managerId: "usr_rohan",   createdAt: daysAgo(55), updatedAt: NOW },
-      { id: "usr_aarav",   email: "aarav@atomberg.com",   name: "Aarav Mehta",    passwordHash: hash, role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(50), updatedAt: NOW },
-      { id: "usr_neha",    email: "neha@atomberg.com",    name: "Neha Sharma",    passwordHash: hash, role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(50), updatedAt: NOW },
-      { id: "usr_vikram",  email: "vikram@atomberg.com",  name: "Vikram Singh",   passwordHash: hash, role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(30), updatedAt: NOW },
-      { id: "usr_arjun",   email: "arjun@atomberg.com",   name: "Arjun Nair",     passwordHash: hash, role: "EMPLOYEE", department: "Sales",       managerId: "usr_karthik", createdAt: daysAgo(50), updatedAt: NOW },
+      { id: "usr_rohan",   email: "rohan@atomberg.com",   name: "Rohan Kapoor",   passwordHash: adminHash,      role: "ADMIN",    department: "Operations",  managerId: null,          createdAt: daysAgo(60), updatedAt: NOW },
+      { id: "usr_priya",   email: "priya@atomberg.com",   name: "Priya Iyer",     passwordHash: managerHash,    role: "MANAGER",  department: "Engineering", managerId: "usr_rohan",   createdAt: daysAgo(55), updatedAt: NOW },
+      { id: "usr_karthik", email: "karthik@atomberg.com", name: "Karthik Reddy",  passwordHash: supportingHash, role: "MANAGER",  department: "Sales",       managerId: "usr_rohan",   createdAt: daysAgo(55), updatedAt: NOW },
+      { id: "usr_aarav",   email: "aarav@atomberg.com",   name: "Aarav Mehta",    passwordHash: employeeHash,   role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(50), updatedAt: NOW },
+      { id: "usr_neha",    email: "neha@atomberg.com",    name: "Neha Sharma",    passwordHash: supportingHash, role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(50), updatedAt: NOW },
+      { id: "usr_vikram",  email: "vikram@atomberg.com",  name: "Vikram Singh",   passwordHash: supportingHash, role: "EMPLOYEE", department: "Engineering", managerId: "usr_priya",   createdAt: daysAgo(30), updatedAt: NOW },
+      { id: "usr_arjun",   email: "arjun@atomberg.com",   name: "Arjun Nair",     passwordHash: supportingHash, role: "EMPLOYEE", department: "Sales",       managerId: "usr_karthik", createdAt: daysAgo(50), updatedAt: NOW },
     ],
   });
-  console.log("  · 7 users seeded");
+  console.log("  · 7 users seeded (3 with strong passwords, 4 supporting w/ password123)");
 
   // ── 2. CYCLES (5) — BRD §2.3 calendar; Q1 ACTIVE so judges can save check-ins ──
   await prisma.cycle.createMany({

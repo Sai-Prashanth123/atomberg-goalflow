@@ -1,4 +1,8 @@
-const BASE_URL = (import.meta as { env?: Record<string, string> }).env?.VITE_API_URL ?? "http://localhost:3001";
+// Same-origin /api prefix. The frontend's web server (Vite dev or the Node SSR
+// adapter in prod) proxies /api/* to the backend with the /api prefix stripped.
+// Override via VITE_API_URL only if you're running the frontend cross-origin
+// from the backend (rare — local dev still uses /api via vite.config.ts proxy).
+const BASE_URL = (import.meta as { env?: Record<string, string> }).env?.VITE_API_URL ?? "/api";
 
 // localStorage key for the bearer token. We also keep the HttpOnly cookie set
 // by the backend — sending both makes auth survive Chrome's third-party-cookie
